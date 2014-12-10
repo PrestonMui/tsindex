@@ -7,21 +7,23 @@ syntax varname(numeric), base(integer) newvar(string)
 local 1 = subinstr("`1'",",","",.)
 
 qui {
+	tempvar temp
 	
 	xtset
-	tempvar tag
-	gen `tag' = 1 if `r(timevar)'==`base'
+	local pvar = "`r(panelvar)'"
+	local tvar = "`r(timevar)'"
 
-	if "`r(panelvar)'"=="" {
-		sort `tag'
-		gen `newvar' = 100*`1'/`1'[1] if `tag'[1]==1
+	if "`pvar'"=="" {
+		egen `temp' = total(cond(`tvar'==`base',`1',.))
 	}
+
 	else {
-		bys `r(panelvar)' (`tag'): gen `newvar' = 100*`1'/`1'[1] if `tag'[1]==1
+		by `pvar': egen `temp' = total(cond(`tvar'==`base',`1',.))
 	}
-	
-	sort `r(panelvar)' `r(timevar)'
 
+	gen `newvar' = 100 * `1' / `temp'
+
+	sort `pvar' `tvar'
 }
-	
+
 end
