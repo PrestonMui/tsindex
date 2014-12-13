@@ -1,27 +1,32 @@
 program tsindex
 
 version 12.1
-	
-syntax varname(numeric), base(integer) newvar(string)
-
-local 1 = subinstr("`1'",",","",.)
+		
+syntax varlist, Timebase(integer) [Indexto(real 100)] [Prefix(string)] [Suffix(string)]
 
 qui {
-	tempvar temp
 	
 	xtset
 	local pvar = "`r(panelvar)'"
 	local tvar = "`r(timevar)'"
 
-	if "`pvar'"=="" {
-		egen `temp' = total(cond(`tvar'==`base',`1',.))
-	}
+	foreach var of local varlist {
 
-	else {
-		by `pvar': egen `temp' = total(cond(`tvar'==`base',`1',.))
-	}
+		if "`prefix'"=="" & "`suffix'"=="" local suffix "_index"
 
-	gen `newvar' = 100 * `1' / `temp'
+		local newvar = "`prefix'" + "`var'" + "`suffix'"
+
+		tempvar temp
+
+		if "`pvar'"=="" {
+			egen `temp' = total(cond(`tvar'==`timebase',`var',.))
+		}
+
+		else {
+			by `pvar': egen `temp' = total(cond(`tvar'==`timebase',`var',.))
+		}
+		gen `newvar' = `indexto' * `var' / `temp'
+	}
 
 	sort `pvar' `tvar'
 }
